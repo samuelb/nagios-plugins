@@ -1,4 +1,21 @@
 #!/bin/bash
+#
+# Compares the HTTP bodies of multiple URLs and alarms if they differs.
+#
+# Usage:
+# check_compare_http [-h] [-c] URL-1 URL-2 [... URL-n]
+#
+# Options:
+# -h
+#     Show this help text.
+# -c
+#     Raise a critical result instead of warning.
+# URL
+#     A http/https URL to compare content of.
+#
+#
+# Samuel Barabas <samuel@owee.de>, April 2016
+#
 
 STATE_OK=0
 STATE_WARNING=1
@@ -7,7 +24,6 @@ STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 CRITICAL=false
 URLS=""
-
 
 CMDMD5=$(which md5sum)
 if [ -z $CMDMD5 ]; then
@@ -18,25 +34,8 @@ if [ -z $CMDMD5 ]; then
     exit $STATE_UNKNOWN
 fi
 
-
 print_help() {
-cat << HELP
-Compares HTTP body the content of multiple URLs and alarms if it differs.
-
-Usage:
-$(basename $0) [-h] [-c] URL-1 URL-2 [... URL-n]
-
-Options:
--h
-    Show this help text.
-
--c
-    Raise a critical result instead of warning.
-
-URL
-    A http/https URL to compare content of.
-
-HELP
+    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' $0
 }
 
 ARGS="$*"

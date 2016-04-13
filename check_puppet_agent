@@ -1,8 +1,25 @@
-#! /bin/bash
+#!/bin/bash
 #
 # Check the functionality of puppet agent on current host.
 #
-# Samuel Barabas samuel@owee.de - 30. March 2016
+# Usage:
+# check_puppet_agent [-c] [-a <min>]  [-A <min>]  [-d <min>]  [-D <min>]
+#
+# Options:
+# -a <min>
+#     Issue a warning if puppet agent is applying the configuration for more
+#     that <min> minutes. Good for check if puppet is stuck.
+# -A <min>
+#     Same as -a, but to a critical warning. Can be used together with -a.
+# -d <min>
+#     Issue a warning if puppet agent is disabled for more that <min> minutes.
+# -D <min>
+#     Same as -d, but to a critical warning. Can be used together with -d.
+# -c
+#     If puppet daemon is not runnit, do a critical alarm instead of warning.
+#
+#
+# Samuel Barabas <samuel@owee.de>, April 2016
 #
 
 STATE_OK=0
@@ -13,25 +30,7 @@ STATE_DEPENDENT=4
 RUNNING="warn"
 
 print_help() {
-cat << HELP
-Check the functionality of puppet a puppet agent on current host.
-
-Usage:
-$(basename $0) [-c] [-a <min>]  [-A <min>]  [-d <min>]  [-D <min>] 
-
-Options:
--a <min>
-    Issue a warning if puppet agent is applying the configuration for more
-    that <min> minutes. Good for check if puppet is stuck.
--A <min>
-    Same as -a, but to a critical warning. Can be used together with -a.
--d <min>
-    Issue a warning if puppet agent is disabled for more that <min> minutes.
--D <min>
-    Same as -d, but to a critical warning. Can be used together with -d.
--c
-    If puppet daemon is not runnit, do a critical alarm instead of warning.
-HELP
+    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' $0
 }
 
 while getopts "a:A:d:D:ch" OPT; do
