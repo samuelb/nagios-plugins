@@ -1,22 +1,21 @@
 #!/bin/bash
-print_help() { cat <<HELP
-
-Check if a reboot is required after a debian/ubuntu package was upgraded.
-
-Usage:
- check_puppet_agent [-w <min>] [-c <min>]
-
-Options:
- -w <min>
-    Do warn if a reboot is required since this ammount of minutes. Default 0.
- -c <min>
-    Do critical if a reboot is required since this amount of minutes
- -f <file>
-    Path to file which exstence indicates that a reboot is require.
-    Default /var/run/reboot-required
-
-HELP
-}
+#
+# Check if a reboot is required after a debian/ubuntu package was upgraded.
+#
+# Usage:
+#  check_puppet_agent.sh [-w <min>] [-c <min>]
+#
+# Options:
+#  -w <min>
+#     Do warn if a reboot is required since this ammount of minutes. Default 0.
+#  -c <min>
+#     Do critical if a reboot is required since this amount of minutes
+#  -f <file>
+#     Path to file which exstence indicates that a reboot is require.
+#     Default /var/run/reboot-required
+#
+# Samuel Barabas <samuel@owee.de>, 29 November 2016
+#
 
 state_ok=0
 state_warning=1
@@ -28,6 +27,10 @@ reboot_file="/var/run/reboot-required"
 warning=-1
 critical=-1
 text="no reboot required"
+
+print_help() {
+    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' $0
+}
 
 while getopts "w:c:f:h" opt; do
   case $opt in

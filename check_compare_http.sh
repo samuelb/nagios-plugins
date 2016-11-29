@@ -3,7 +3,7 @@
 # Compares the HTTP bodies of multiple URLs and alarms if they differs.
 #
 # Usage:
-# check_compare_http [-h] [-c] URL-1 URL-2 [... URL-n]
+# check_compare_http.sh [-h] [-c] URL-1 URL-2 [... URL-n]
 #
 # Options:
 # -h
@@ -14,7 +14,7 @@
 #     A http/https URL to compare content of.
 #
 #
-# Samuel Barabas <samuel@owee.de>, April 2016
+# Samuel Barabas <samuel@owee.de>, 7 April 2016
 #
 
 STATE_OK=0

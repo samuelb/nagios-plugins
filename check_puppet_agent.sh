@@ -3,7 +3,7 @@
 # Check the functionality of puppet agent on current host.
 #
 # Usage:
-# check_puppet_agent [-c] [-a <min>]  [-A <min>]  [-d <min>]  [-D <min>]
+# check_puppet_agent.sh [-c] [-a <min>]  [-A <min>]  [-d <min>]  [-D <min>]
 #
 # Options:
 # -a <min>
@@ -19,7 +19,7 @@
 #     If puppet daemon is not runnit, do a critical alarm instead of warning.
 #
 #
-# Samuel Barabas <samuel@owee.de>, April 2016
+# Samuel Barabas <samuel@owee.de>, 7 April 2016
 #
 
 STATE_OK=0
