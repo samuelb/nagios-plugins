@@ -23,67 +23,71 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 CRITICAL=false
-URLS=""
+URLS=()
 
 CMDMD5=$(which md5sum)
-if [ -z $CMDMD5 ]; then
+if [ -z "$CMDMD5" ]; then
     CMDMD5=$(which md5)
 fi
-if [ -z $CMDMD5 ]; then
-    echo "Could not find md5/md5sum command" >&2
+if [ -z "$CMDMD5" ]; then
+    echo "UNKNOWN - Could not find md5/md5sum command"
     exit $STATE_UNKNOWN
 fi
 
 print_help() {
-    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' $0
+    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' "$0"
 }
 
-ARGS="$*"
-
-for ARG in $ARGS; do
+for ARG in "$@"; do
     case $ARG in
         "-c")
             CRITICAL=true
             ;;
         "-h"|"--help")
             print_help
-            exit $STATE_UNKOWN
+            exit $STATE_UNKNOWN
             ;;
         *)
-            URLS="$URLS $ARG"
+            URLS+=("$ARG")
     esac
 done
 
-if [ $(wc -w <<< "$URLS") -lt 2 ]; then
-    echo "You need to specify at least two URLS" >&2
+if [ ${#URLS[@]} -lt 2 ]; then
+    echo "UNKNOWN - You need to specify at least two URLs"
     exit $STATE_UNKNOWN
 fi
 
 OTHERMD5=""
 DIFFFOUND=false
+DETAILS=""
 
-for URL in $URLS; do
-    MD5=$(curl -s $URL | $CMDMD5)
-    echo $URL : $MD5
-    if [ -z $OTHERMD5 ]; then
+for URL in "${URLS[@]}"; do
+    # md5sum prints "<hash>  -", md5 only the hash; keep just the hash.
+    # pipefail makes a failed download (curl -f) fail the whole pipeline.
+    if ! MD5=$(set -o pipefail; curl -sf "$URL" | $CMDMD5 | awk '{print $1}'); then
+        echo "UNKNOWN - Could not fetch $URL"
+        exit $STATE_UNKNOWN
+    fi
+    DETAILS="$DETAILS
+$URL : $MD5"
+    if [ -z "$OTHERMD5" ]; then
         OTHERMD5=$MD5
-    else
-        if [ $MD5 != $OTHERMD5 ]; then
-            DIFFFOUND=true
-        fi
+    elif [ "$MD5" != "$OTHERMD5" ]; then
+        DIFFFOUND=true
     fi
 done
 
+# the first line is the status, the per URL hashes follow as long output
 if $DIFFFOUND; then
     if $CRITICAL; then
-        echo "CRITICAL - The URLs deliver different content"
+        echo "CRITICAL - The URLs deliver different content$DETAILS"
         exit $STATE_CRITICAL
     else
-        echo "WARNING - The URLs deliver different content"
+        echo "WARNING - The URLs deliver different content$DETAILS"
         exit $STATE_WARNING
     fi
 fi
 
-echo "OK - All URLs deliver the same content"
+echo "OK - All URLs deliver the same content$DETAILS"
 exit $STATE_OK
 

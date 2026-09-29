@@ -30,7 +30,7 @@ agent daemon is not running for disabled for a longer time.
 
 Check if a reboot is required after a Debian/Ubuntu package was upgraded.
 
-    check_puppet_agent.sh [-w <min>] [-c <min>]
+    check_reboot_required.sh [-w <min>] [-c <min>] [-f <file>]
 
 ### check_wmi_services.sh
 
@@ -51,4 +51,4 @@ You can redistribute and/or modify this software under the terms of the GNU Gene
 
 This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-See the COPYING file for the complete text of the GNU General Public License, version 3.
+See the LICENCE file for the complete text of the GNU General Public License, version 3.
