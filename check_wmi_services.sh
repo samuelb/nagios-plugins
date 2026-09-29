@@ -47,17 +47,17 @@ for service in ${IGNORE//,/ }; do
 done
 
 # run wmi query
-WMICSTR=$(wmic --user=$USERNAME --password=$PASSWORD //$HOST "$QUERY" 2>&1)
+WMICSTR=$(wmic --user="$USERNAME" --password="$PASSWORD" "//$HOST" "$QUERY" 2>&1)
 
 # test if a error occured
 if [ ! $? -eq 0 ]; then
-    echo "UNKOWN - $WMICSTR"
+    echo "UNKNOWN - $WMICSTR"
     exit $STATE_UNKNOWN
 fi
 
 IFS=$'\n'
 for line in $WMICSTR; do
-    if [ $line = "CLASS: Win32_Service" ] || [ $line = "DisplayName|Name" ]; then
+    if [ "$line" = "CLASS: Win32_Service" ] || [ "$line" = "DisplayName|Name" ]; then
         continue
     fi
     SVC_NAME=${line##*|}
@@ -76,7 +76,7 @@ case $STATE in
     $STATE_CRITICAL)
         echo "CRITICAL - $MESSAGE"
         ;;
-    $STATE_UNKOWN)
+    $STATE_UNKNOWN)
         echo "UNKNOWN - $MESSAGE"
         ;;
     $STATE_DEPENDENT)

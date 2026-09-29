@@ -29,8 +29,18 @@ STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 RUNNING="warn"
 
+# puppet's state directory: AIO packages (puppet >= 4), Debian's own
+# packages and the old puppet 3 location
+STATE_DIR=/var/lib/puppet/state
+for DIR in /opt/puppetlabs/puppet/cache/state /var/cache/puppet/state /var/lib/puppet/state; do
+    if [ -d "$DIR" ]; then
+        STATE_DIR=$DIR
+        break
+    fi
+done
+
 print_help() {
-    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' $0
+    awk 'NR == 3,!/^#/ {print p} { p = substr($0,2) }' "$0"
 }
 
 while getopts "a:A:d:D:ch" OPT; do
@@ -52,13 +62,13 @@ while getopts "a:A:d:D:ch" OPT; do
             ;;
         *|h)
             print_help
-            exit $STATE_UNKOWN
+            exit $STATE_UNKNOWN
             ;;
     esac
 done
 
-# check puppet runnnig
-if ! pgrep -f /usr/bin/puppet > /dev/null; then
+# check puppet running (/usr/bin/puppet or /opt/puppetlabs/puppet/bin/puppet)
+if ! pgrep -f 'bin/puppet agent' > /dev/null; then
     if [ $RUNNING = "crit" ]; then
         echo "CRITICAL - puppet agent daemon not running"
         exit $STATE_CRITICAL
@@ -69,16 +79,16 @@ if ! pgrep -f /usr/bin/puppet > /dev/null; then
 fi
 
 # check puppet disabled
-if [ ! -z $DISABLED_WARNING ] || [ ! -z $DISABLED_CRITICAL ]; then
-    if [ -f /var/lib/puppet/state/agent_disabled.lock ]; then
-        MESSAGE=$(cat /var/lib/puppet/state/agent_disabled.lock | grep -Po '(?<="disabled_message":")[^"]*')
-        CREATED=$(stat -c %Y /var/lib/puppet/state/agent_disabled.lock)
+if [ -n "$DISABLED_WARNING" ] || [ -n "$DISABLED_CRITICAL" ]; then
+    if [ -f "$STATE_DIR/agent_disabled.lock" ]; then
+        MESSAGE=$(grep -Po '(?<="disabled_message":")[^"]*' "$STATE_DIR/agent_disabled.lock")
+        CREATED=$(stat -c %Y "$STATE_DIR/agent_disabled.lock")
         NOW=$(date +%s)
-        AGE=$[($NOW-$CREATED)/60]
-        if [ ! -z $DISABLED_CRITICAL ] && [ $AGE -ge $DISABLED_CRITICAL ]; then
+        AGE=$(( (NOW - CREATED) / 60 ))
+        if [ -n "$DISABLED_CRITICAL" ] && [ $AGE -ge "$DISABLED_CRITICAL" ]; then
             echo "CRITICAL - puppet is disabled with message '$MESSAGE' since $AGE minutes"
             exit $STATE_CRITICAL
-        elif [ ! -z $DISABLED_WARNING ] && [ $AGE -ge $DISABLED_WARNING ]; then
+        elif [ -n "$DISABLED_WARNING" ] && [ $AGE -ge "$DISABLED_WARNING" ]; then
             echo "WARNING - puppet is disabled with message '$MESSAGE' since $AGE minutes"
             exit $STATE_WARNING
         fi
@@ -86,15 +96,15 @@ if [ ! -z $DISABLED_WARNING ] || [ ! -z $DISABLED_CRITICAL ]; then
 fi
 
 # check if puppet is stuck
-if [ ! -z $APPLYING_WARNING ] || [ ! -z $APPLYING_CRITICAL ]; then
-    if [ -f /var/lib/puppet/state/agent_catalog_run.lock ]; then
-        CREATED=$(stat -c %Y /var/lib/puppet/state/agent_catalog_run.lock)
+if [ -n "$APPLYING_WARNING" ] || [ -n "$APPLYING_CRITICAL" ]; then
+    if [ -f "$STATE_DIR/agent_catalog_run.lock" ]; then
+        CREATED=$(stat -c %Y "$STATE_DIR/agent_catalog_run.lock")
         NOW=$(date +%s)
-        AGE=$[($NOW-$CREATED)/60]
-        if [ ! -z $APPLYING_CRITICAL ] && [ $AGE -ge $APPLYING_CRITICAL ]; then
+        AGE=$(( (NOW - CREATED) / 60 ))
+        if [ -n "$APPLYING_CRITICAL" ] && [ $AGE -ge "$APPLYING_CRITICAL" ]; then
             echo "CRITICAL - puppet is applying for $AGE minutes now. maybe it's stuck"
             exit $STATE_CRITICAL
-        elif [ ! -z $APPLYING_WARNING ] && [ $AGE -ge $APPLYING_WARNING ]; then
+        elif [ -n "$APPLYING_WARNING" ] && [ $AGE -ge "$APPLYING_WARNING" ]; then
             echo "WARNING - puppet is applying for $AGE minutes now. maybe it's stuck"
             exit $STATE_WARNING
         fi
